@@ -5,6 +5,11 @@ from ..items import Job
 
 # -----------------------------------------------------------
 # A spider for software developer jobs at www.indeed.pt
+#
+# Flags: 
+#   -- debug (if activated will open each visited page)
+#   -- maxDepth default=10pages, each page is =~ 16 jobs
+#       --- So by default 10 * 16 =~ 160jobs
 # -----------------------------------------------------------
 
 class IndeedSpider(scrapy.Spider):
@@ -13,15 +18,15 @@ class IndeedSpider(scrapy.Spider):
     start_urls = ['https://www.indeed.pt/jobs?q=software+developer']
    
 
-    def __init__(self, debug=0, *args, **kwargs):
+    def __init__(self, debug=0, maxDepth=10, *args, **kwargs):
         super(IndeedSpider, self).__init__(*args, **kwargs)
         self.runType = (int(debug) == 1)
-        self.initial_depth = 40
+        self.max_depth = maxDepth
         self.currentVisited = 0
         self.base_url = 'https://www.indeed.pt/jobs?q=software+developer'
 
     def parse(self, response):
-        if(self.currentVisited >= self.initial_depth):
+        if(self.currentVisited >= self.max_depth):
             print("Stopping")
             return
 
@@ -32,9 +37,7 @@ class IndeedSpider(scrapy.Spider):
             yield self.processJobCard(jobCard)
 
         self.currentVisited+=1
-        print("NEXT PAGE")
         nextPage = self.base_url + "&start=" + str((self.currentVisited+1)*10)
-        print(nextPage)
         yield scrapy.Request(nextPage, callback=self.parse)
 
 
@@ -45,7 +48,5 @@ class IndeedSpider(scrapy.Spider):
         job = Job(name=title,company=company,location=location)
         return job
 
-"""     def parse(self, response):
-         """
             
 
